@@ -22,7 +22,12 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
-    const newSocket = io(window.location.origin, {
+    const socketUrl =
+      import.meta.env.VITE_SOCKET_URL ||
+      import.meta.env.VITE_API_URL ||
+      window.location.origin;
+
+    const newSocket = io(socketUrl, {
       auth: { token },
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 10,
