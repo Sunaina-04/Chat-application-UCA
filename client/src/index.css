@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #0b0e14;
+  color: #e2e8f0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  user-select: none;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+/* Custom sleek dark scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a3650;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3b4b6e;
+}
+
+/* Glassmorphism helpers */
+.glass-panel {
+  background: rgba(21, 27, 40, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(42, 54, 80, 0.6);
+}
+
+.glass-dropdown {
+  background: rgba(26, 34, 52, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(59, 75, 110, 0.7);
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.65), 0 0 1px 1px rgba(99, 102, 241, 0.15);
+}
+
+/* Message selection & highlight */
+.message-highlight {
+  animation: pulseHighlight 2s ease-out;
+}
+
+@keyframes pulseHighlight {
+  0% { background-color: rgba(99, 102, 241, 0.25); }
+  100% { background-color: transparent; }
+}
+
+/* Tooltip transition */
+.tooltip-fade {
+  transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
+}
