@@ -61,6 +61,11 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check probe
+app.get('/health', (req, res) => {
+  res.json({ status: 'online', app: 'ChatSpace', timestamp: new Date().toISOString() });
+});
+
 // API Routes
 app.use('/api', apiRoutes);
 
