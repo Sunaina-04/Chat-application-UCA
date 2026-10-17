@@ -1,10 +1,10 @@
 services:
   - type: web
-    name: chatspace
+    name: chatspace-backend
     env: node
     plan: free
-    buildCommand: npm run build
-    startCommand: npm start
+    buildCommand: npm install --prefix server
+    startCommand: node server/server.js
     healthCheckPath: /health
     autoDeploy: true
     envVars:
@@ -13,4 +13,6 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: MONGODB_URI
+        sync: false
+      - key: CLIENT_URL
         sync: false

@@ -25,15 +25,28 @@ const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 const CLIENT_URL = process.env.CLIENT_URL;
 
-// Flexible CORS origins
-const allowedOrigins = CLIENT_URL
-  ? [CLIENT_URL, 'http://localhost:5173', 'http://127.0.0.1:5173']
-  : '*';
+// Flexible CORS origins (Supports Vercel production & preview deployments)
+const cleanClientUrl = CLIENT_URL ? CLIENT_URL.replace(/\/$/, '') : null;
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true; // allow same-origin, curl, server-to-server
+  if (!cleanClientUrl || cleanClientUrl === '*') return true;
+  const cleanOrigin = origin.replace(/\/$/, '');
+  if (cleanOrigin === cleanClientUrl) return true;
+  if (cleanOrigin === 'http://localhost:5173' || cleanOrigin === 'http://127.0.0.1:5173') return true;
+  if (cleanOrigin.endsWith('.vercel.app')) return true; // support all Vercel deploys
+  return false;
+};
 
 // Initialize Socket.IO
 const io = new SocketIOServer(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS origin not allowed: ${origin}`));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
   },
@@ -44,7 +57,13 @@ const io = new SocketIOServer(server, {
 // Middlewares
 app.use(
   cors({
-    origin: allowedOrigins === '*' ? true : allowedOrigins,
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS origin not allowed: ${origin}`));
+      }
+    },
     credentials: true,
   })
 );

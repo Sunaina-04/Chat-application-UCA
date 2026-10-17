@@ -4,6 +4,8 @@
   "description": "ChatSpace - Real-Time Topic-Based Workspace, Group Channels & Personal Messaging",
   "scripts": {
     "build": "npm install --prefix client && npm run build --prefix client && npm install --prefix server",
+    "build:server": "npm install --prefix server",
+    "build:client": "npm install --prefix client && npm run build --prefix client",
     "start": "node server/server.js",
     "dev:server": "npm run dev --prefix server",
     "dev:client": "npm run dev --prefix client",
