@@ -2,9 +2,24 @@
 class SoundEffects {
   constructor() {
     this.ctx = null;
+    this.muted = typeof window !== 'undefined' ? localStorage.getItem('chatspace_sound_muted') === 'true' : false;
+  }
+
+  isMuted() {
+    return this.muted;
+  }
+
+  toggleMute() {
+    this.muted = !this.muted;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('chatspace_sound_muted', String(this.muted));
+      window.dispatchEvent(new CustomEvent('chatspace:mute-changed', { detail: { muted: this.muted } }));
+    }
+    return this.muted;
   }
 
   getAudioContext() {
+    if (this.muted) return null;
     if (!this.ctx && typeof window !== 'undefined') {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (AudioCtx) {
@@ -18,6 +33,7 @@ class SoundEffects {
   }
 
   playSend() {
+    if (this.muted) return;
     try {
       const ctx = this.getAudioContext();
       if (!ctx) return;
@@ -42,6 +58,7 @@ class SoundEffects {
   }
 
   playReceive() {
+    if (this.muted) return;
     try {
       const ctx = this.getAudioContext();
       if (!ctx) return;

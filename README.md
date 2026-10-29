@@ -72,11 +72,19 @@ Whether you need focused community discussion rooms (`#general`, `#engineering`,
 - **Slide-out Thread Drawer**: A dedicated right-side panel showing the root message, reply chronology, and an isolated reply composer.
 - Quoted parent message previews in the main feed (`↳ Replying to ...`).
 
-### 4. 🔊 Web Audio Feedback
+### 4. 🔊 Web Audio Feedback & Sound Controls
 - Built-in sound effects using the native Web Audio API (no heavy external audio files required).
 - Distinct, crisp audio cues for sending messages and receiving incoming notifications.
+- **Audio Mute/Unmute Toggle**: Convenient volume button in user footer with `localStorage` persistence.
 
-### 5. 🔄 Auto-Reconnection & Resilience
+### 5. 💻 Rich Message Formatting & Code Blocks
+- **Clickable URLs**: Automatically parses and renders external links with secure `target="_blank"` attributes.
+- **Inline & Multi-Line Code Blocks**: Supports inline `` `code` `` snippets and multiline ```` ``` ```` syntax containers with quick-insert button.
+- **Interactive Mentions**: Highlights `@username` mentions in conversation feeds.
+- **1-Click Message Copy**: Quick clipboard button on message hover and context menu with instant "Copied!" feedback.
+- **Slash Commands**: Instant expansion for `/shrug`, `/tableflip`, `/unflip`, `/lenny`, and `/clear`.
+
+### 6. 🔄 Auto-Reconnection & Resilience
 - Socket.IO connection manager with automatic exponential backoff reconnection.
 - Automatic room re-subscription and unread count refresh on connection restore.
 

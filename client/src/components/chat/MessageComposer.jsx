@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Smile, Paperclip, X, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { Send, Smile, Paperclip, X, Image as ImageIcon, Sparkles, Code } from 'lucide-react';
 import { useChat } from '../../context/ChatContext';
 import { useSocket } from '../../context/SocketContext';
 
@@ -40,8 +40,19 @@ export const MessageComposer = ({ replyingTo, onCancelReply, placeholder = 'Type
   };
 
   const handleSend = () => {
-    const trimmed = text.trim();
+    let trimmed = text.trim();
     if (!trimmed && attachments.length === 0) return;
+
+    // Expand slash commands
+    if (trimmed === '/shrug') trimmed = '¯\\_(ツ)_/¯';
+    else if (trimmed === '/tableflip') trimmed = '(╯°□°)╯︵ ┻━┻';
+    else if (trimmed === '/unflip') trimmed = '┬─┬ノ( º _ ºノ)';
+    else if (trimmed === '/lenny') trimmed = '( ͡° ͜ʖ ͡°)';
+    else if (trimmed === '/clear') {
+      setText('');
+      if (inputRef.current) inputRef.current.focus();
+      return;
+    }
 
     sendMessage({
       content: trimmed,
@@ -59,6 +70,11 @@ export const MessageComposer = ({ replyingTo, onCancelReply, placeholder = 'Type
     if (inputRef.current) {
       inputRef.current.focus();
     }
+  };
+
+  const insertCodeBlock = () => {
+    setText((prev) => (prev ? `${prev}\n\`\`\`\n\n\`\`\`` : '```\n\n```'));
+    if (inputRef.current) inputRef.current.focus();
   };
 
   const handleKeyDown = (e) => {
@@ -130,6 +146,15 @@ export const MessageComposer = ({ replyingTo, onCancelReply, placeholder = 'Type
           title="Add Image Attachment"
         >
           <Paperclip className="w-4 h-4" />
+        </button>
+
+        {/* Code Snippet Button */}
+        <button
+          onClick={insertCodeBlock}
+          className="p-2 text-slate-400 hover:text-emerald-400 hover:bg-chatdark-hover rounded-xl transition-colors"
+          title="Insert Code Block (```)"
+        >
+          <Code className="w-4 h-4" />
         </button>
 
         {/* Text Input */}

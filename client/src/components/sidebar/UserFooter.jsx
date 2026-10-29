@@ -1,15 +1,30 @@
-import React, { useState } from 'react';
-import { LogOut, User, RefreshCw, ChevronUp, Bell } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { LogOut, User, RefreshCw, ChevronUp, Bell, Volume2, VolumeX } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useChat } from '../../context/ChatContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { Avatar } from '../common/Avatar';
+import { sounds } from '../../utils/sound';
 
 export const UserFooter = () => {
   const { user, logout, updateStatus } = useAuth();
   const { setIsDemoSwitcherOpen, setIsProfileOpen } = useChat();
   const { unreadCount } = useNotifications();
   const [isStatusOpen, setIsStatusOpen] = useState(false);
+  const [isMuted, setIsMuted] = useState(sounds.isMuted());
+
+  useEffect(() => {
+    const handleMuteChange = (e) => {
+      setIsMuted(e.detail.muted);
+    };
+    window.addEventListener('chatspace:mute-changed', handleMuteChange);
+    return () => window.removeEventListener('chatspace:mute-changed', handleMuteChange);
+  }, []);
+
+  const handleToggleMute = () => {
+    const nextState = sounds.toggleMute();
+    setIsMuted(nextState);
+  };
 
   if (!user) return null;
 
@@ -67,6 +82,17 @@ export const UserFooter = () => {
             </div>
           )}
         </div>
+
+        {/* Sound Mute/Unmute Toggle */}
+        <button
+          onClick={handleToggleMute}
+          className={`p-1.5 rounded-lg transition-colors ${
+            isMuted ? 'text-rose-400 hover:bg-rose-950/40' : 'text-slate-400 hover:text-slate-200 hover:bg-chatdark-card'
+          }`}
+          title={isMuted ? 'Unmute notification sounds' : 'Mute notification sounds'}
+        >
+          {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+        </button>
 
         {/* Demo Switcher Quick Button */}
         <button

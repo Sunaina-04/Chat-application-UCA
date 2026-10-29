@@ -9,12 +9,99 @@ import {
   CheckCheck,
   CornerDownRight,
   MessageCircle,
+  Copy,
 } from 'lucide-react';
 import { Avatar } from '../common/Avatar';
 import { useAuth } from '../../context/AuthContext';
 import { useChat } from '../../context/ChatContext';
 
 const QUICK_EMOJIS = ['👍', '❤️', '🔥', '🚀', '😂', '💡', '💯'];
+
+// Formatter for URLs, mentions, inline code, and code blocks
+const renderMessageContent = (content) => {
+  if (!content) return null;
+
+  const codeBlockRegex = /```([\s\S]*?)```/g;
+  const parts = [];
+  let lastIdx = 0;
+  let match;
+
+  while ((match = codeBlockRegex.exec(content)) !== null) {
+    if (match.index > lastIdx) {
+      parts.push({ type: 'text', text: content.slice(lastIdx, match.index) });
+    }
+    parts.push({ type: 'codeblock', code: match[1].trim() });
+    lastIdx = match.index + match[0].length;
+  }
+  if (lastIdx < content.length) {
+    parts.push({ type: 'text', text: content.slice(lastIdx) });
+  }
+
+  return parts.map((part, idx) => {
+    if (part.type === 'codeblock') {
+      return (
+        <pre
+          key={idx}
+          className="my-1.5 p-3 rounded-xl bg-chatdark-card/90 border border-chatdark-border text-xs font-mono text-emerald-300 overflow-x-auto selection:bg-brand-500/30"
+        >
+          <code>{part.code}</code>
+        </pre>
+      );
+    }
+
+    const inlineCodeParts = part.text.split(/(`[^`]+`)/g);
+
+    return (
+      <span key={idx}>
+        {inlineCodeParts.map((inlinePart, i) => {
+          if (inlinePart.startsWith('`') && inlinePart.endsWith('`') && inlinePart.length > 2) {
+            return (
+              <code
+                key={i}
+                className="mx-0.5 px-1.5 py-0.5 rounded bg-chatdark-card border border-chatdark-border font-mono text-xs text-brand-300"
+              >
+                {inlinePart.slice(1, -1)}
+              </code>
+            );
+          }
+
+          const words = inlinePart.split(/(https?:\/\/[^\s]+|@[a-zA-Z0-9_]+)/g);
+          return (
+            <span key={i}>
+              {words.map((word, wIdx) => {
+                if (word.startsWith('http://') || word.startsWith('https://')) {
+                  return (
+                    <a
+                      key={wIdx}
+                      href={word}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-400 hover:text-brand-300 underline underline-offset-2 break-all"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {word}
+                    </a>
+                  );
+                }
+                if (word.startsWith('@') && word.length > 1) {
+                  return (
+                    <span
+                      key={wIdx}
+                      className="px-1 py-0.5 rounded bg-brand-500/10 text-brand-400 font-semibold text-xs"
+                    >
+                      {word}
+                    </span>
+                  );
+                }
+                return word;
+              })}
+            </span>
+          );
+        })}
+      </span>
+    );
+  });
+};
 
 export const MessageItem = ({ message, onReply, isHighlighted = false }) => {
   const { user } = useAuth();
@@ -24,9 +111,17 @@ export const MessageItem = ({ message, onReply, isHighlighted = false }) => {
   const [editContent, setEditContent] = useState(message.content);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const isSender = message.senderId === user?._id;
   const isDeleted = message.isDeletedForEveryone;
+
+  const handleCopy = () => {
+    if (!message.content) return;
+    navigator.clipboard.writeText(message.content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleSaveEdit = () => {
     if (editContent.trim() && editContent !== message.content) {
@@ -124,13 +219,13 @@ export const MessageItem = ({ message, onReply, isHighlighted = false }) => {
             </div>
           </div>
         ) : (
-          <p
+          <div
             className={`text-sm leading-relaxed break-words whitespace-pre-wrap ${
               isDeleted ? 'italic text-slate-500 select-none' : 'text-slate-200'
             }`}
           >
-            {message.content}
-          </p>
+            {isDeleted ? message.content : renderMessageContent(message.content)}
+          </div>
         )}
 
         {/* Attachments Preview if any */}
@@ -215,6 +310,19 @@ export const MessageItem = ({ message, onReply, isHighlighted = false }) => {
             )}
           </div>
 
+          {/* Copy Message Button */}
+          <button
+            onClick={handleCopy}
+            className={`p-1.5 rounded-lg transition-colors ${
+              copied
+                ? 'text-emerald-400 bg-emerald-950/40'
+                : 'text-slate-400 hover:text-emerald-400 hover:bg-chatdark-hover'
+            }`}
+            title={copied ? 'Copied to clipboard!' : 'Copy message text'}
+          >
+            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+          </button>
+
           {/* Reply Button (starts reply context and opens thread drawer) */}
           <button
             onClick={() => {
@@ -250,6 +358,16 @@ export const MessageItem = ({ message, onReply, isHighlighted = false }) => {
 
             {showMenu && (
               <div className="absolute right-0 top-8 w-44 glass-dropdown rounded-xl p-1 z-50 shadow-xl animate-slide-up">
+                <button
+                  onClick={() => {
+                    handleCopy();
+                    setShowMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-slate-300 hover:bg-chatdark-hover rounded-lg transition-colors"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>{copied ? 'Copied!' : 'Copy text'}</span>
+                </button>
                 {isSender && (
                   <button
                     onClick={() => {
