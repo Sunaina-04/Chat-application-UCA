@@ -83,6 +83,17 @@ export const ChatHeader = () => {
 
       {/* Right Controls Area */}
       <div className="flex items-center gap-2">
+        {/* Active room members pill / topic count */}
+        {currentView === 'groups' && activeGroup?.members && (
+          <div
+            className="hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-chatdark-card/60 border border-chatdark-border rounded-lg text-xs text-slate-300"
+            title={`${activeGroup.members.length} members in this community`}
+          >
+            <Users className="w-3.5 h-3.5 text-brand-400" />
+            <span className="font-semibold">{activeGroup.members.length}</span>
+          </div>
+        )}
+
         {/* Search */}
         <button
           onClick={() => setIsSearchOpen(true)}

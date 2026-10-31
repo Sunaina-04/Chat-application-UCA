@@ -83,6 +83,9 @@ Whether you need focused community discussion rooms (`#general`, `#engineering`,
 - **Interactive Mentions**: Highlights `@username` mentions in conversation feeds.
 - **1-Click Message Copy**: Quick clipboard button on message hover and context menu with instant "Copied!" feedback.
 - **Slash Commands**: Instant expansion for `/shrug`, `/tableflip`, `/unflip`, `/lenny`, and `/clear`.
+- **Date Separators & Timeline Dividers**: Groups message feeds by date (`Today`, `Yesterday`, or formatted weekdays/months) with custom badge dividers.
+- **Floating 'Jump to Present' Controller**: Automatically appears when scrolling up through message histories with live unread indicators and smooth auto-scroll.
+- **Live Community Presence Badges**: Instant member count indicators directly in the active channel header.
 
 ### 6. 🔄 Auto-Reconnection & Resilience
 - Socket.IO connection manager with automatic exponential backoff reconnection.
