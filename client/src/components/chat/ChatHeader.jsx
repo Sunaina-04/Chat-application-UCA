@@ -18,7 +18,7 @@ import { Avatar } from '../common/Avatar';
 
 export const ChatHeader = () => {
   const { currentView, activeRoom, activeGroup, activeConversation, setIsSearchOpen } = useChat();
-  const { isUserOnline } = useSocket();
+  const { isUserOnline, isConnected } = useSocket();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
 
@@ -93,6 +93,19 @@ export const ChatHeader = () => {
             <span className="font-semibold">{activeGroup.members.length}</span>
           </div>
         )}
+
+        {/* Live Socket Status Dot */}
+        <div
+          className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-chatdark-card/40 border border-chatdark-border text-[11px] text-slate-400"
+          title={isConnected ? 'Realtime WebSocket Connected' : 'Reconnecting...'}
+        >
+          <span
+            className={`w-2 h-2 rounded-full ${
+              isConnected ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]' : 'bg-amber-500 animate-ping'
+            }`}
+          />
+          <span className="hidden sm:inline font-mono">{isConnected ? 'Live' : 'Connecting'}</span>
+        </div>
 
         {/* Search */}
         <button
