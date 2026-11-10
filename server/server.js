@@ -4,20 +4,27 @@ import { Server as SocketIOServer } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { connectDB } from './config/db.js';
+import { connectDB, getDBStatus } from './config/db.js';
 import apiRoutes from './routes/index.js';
 import { registerSocketHandlers } from './sockets/socketHandler.js';
 import { notFoundHandler, errorHandler } from './middleware/errorMiddleware.js';
 import { logger } from './utils/logger.js';
 
-import fs from 'fs';
-dotenv.config();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Robust multi-path environment loading: check server/.env then root .env
+if (fs.existsSync(path.join(__dirname, '.env'))) {
+  dotenv.config({ path: path.join(__dirname, '.env') });
+} else if (fs.existsSync(path.join(__dirname, '../.env'))) {
+  dotenv.config({ path: path.join(__dirname, '../.env') });
+} else {
+  dotenv.config();
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -80,9 +87,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check probe
+// Health & database status probe
 app.get('/health', (req, res) => {
-  res.json({ status: 'online', app: 'ChatSpace', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'online',
+    app: 'ChatSpace',
+    database: getDBStatus(),
+    timestamp: new Date().toISOString()
+  });
 });
 
 // API Routes

@@ -18,6 +18,37 @@ export const MessageComposer = ({ replyingTo, onCancelReply, placeholder = 'Type
   const [attachments, setAttachments] = useState([]);
   const typingTimer = useRef(null);
   const inputRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file (PNG, JPG, GIF, WebP, SVG).');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image file size must be less than 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (loadEvent) => {
+      setAttachments((prev) => [
+        ...prev,
+        {
+          url: loadEvent.target.result,
+          name: file.name,
+          fileType: file.type,
+          size: file.size,
+        },
+      ]);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
 
   const getTargetChannel = () => {
     if (currentView === 'groups') {
@@ -139,13 +170,33 @@ export const MessageComposer = ({ replyingTo, onCancelReply, placeholder = 'Type
 
       {/* Composer Input Bar */}
       <div className="relative flex items-center bg-chatdark-card border border-chatdark-border focus-within:border-brand-500/80 rounded-2xl p-1.5 shadow-sm transition-all">
-        {/* Attachment Demo Button */}
+        {/* Hidden File Input */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+
+        {/* Attachment Upload Button */}
         <button
-          onClick={handleSampleImage}
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
           className="p-2 text-slate-400 hover:text-brand-400 hover:bg-chatdark-hover rounded-xl transition-colors"
-          title="Add Image Attachment"
+          title="Upload Local Image File"
         >
           <Paperclip className="w-4 h-4" />
+        </button>
+
+        {/* Demo Sample Image Button */}
+        <button
+          type="button"
+          onClick={handleSampleImage}
+          className="p-2 text-slate-400 hover:text-cyan-400 hover:bg-chatdark-hover rounded-xl transition-colors"
+          title="Insert Sample Demo Image"
+        >
+          <Sparkles className="w-4 h-4" />
         </button>
 
         {/* Code Snippet Button */}

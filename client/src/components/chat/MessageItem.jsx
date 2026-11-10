@@ -231,15 +231,33 @@ export const MessageItem = ({ message, onReply, isHighlighted = false }) => {
         {/* Attachments Preview if any */}
         {message.attachments && message.attachments.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">
-            {message.attachments.map((att, i) => (
-              <div key={i} className="rounded-xl overflow-hidden border border-chatdark-border bg-chatdark-card p-1">
-                {att.url && att.url.match(/\.(jpeg|jpg|gif|png|webp)/i) ? (
-                  <img src={att.url} alt="Attachment" className="max-w-xs max-h-60 rounded-lg object-cover" />
-                ) : (
-                  <div className="p-2 text-xs text-slate-300">{att.name || 'File Attachment'}</div>
-                )}
-              </div>
-            ))}
+            {message.attachments.map((att, i) => {
+              const isImage = att.url && (
+                att.url.startsWith('data:image/') ||
+                att.fileType?.startsWith('image/') ||
+                att.url.match(/\.(jpeg|jpg|gif|png|webp|svg)/i)
+              );
+
+              return (
+                <div key={i} className="rounded-xl overflow-hidden border border-chatdark-border bg-chatdark-card p-1">
+                  {isImage ? (
+                    <a href={att.url} target="_blank" rel="noopener noreferrer" className="block cursor-zoom-in">
+                      <img
+                        src={att.url}
+                        alt={att.name || 'Attachment'}
+                        className="max-w-xs md:max-w-sm max-h-64 rounded-lg object-cover hover:opacity-95 transition-opacity"
+                        loading="lazy"
+                      />
+                    </a>
+                  ) : (
+                    <div className="p-2 text-xs text-slate-300 flex items-center gap-2">
+                      <span>📄</span>
+                      <span className="font-mono">{att.name || 'File Attachment'}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 
