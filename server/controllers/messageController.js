@@ -146,3 +146,26 @@ export const toggleReaction = async (req, res, next) => {
     next(error);
   }
 };
+
+export const togglePin = async (req, res, next) => {
+  try {
+    const { messageId } = req.params;
+    const message = store.togglePinMessage(messageId, req.user._id);
+    res.json({ success: true, message });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getPinnedMessages = async (req, res, next) => {
+  try {
+    const { conversationId, roomId } = req.query;
+    if (!conversationId && !roomId) {
+      return res.status(400).json({ success: false, message: 'Either conversationId or roomId required.' });
+    }
+    const pinned = store.getPinnedMessages({ conversationId, roomId, userId: req.user._id });
+    res.json({ success: true, messages: pinned });
+  } catch (error) {
+    next(error);
+  }
+};

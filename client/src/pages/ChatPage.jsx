@@ -8,6 +8,7 @@ import { MessageList } from '../components/chat/MessageList';
 import { MessageComposer } from '../components/chat/MessageComposer';
 import { TypingIndicator } from '../components/chat/TypingIndicator';
 import { ThreadDrawer } from '../components/chat/ThreadDrawer';
+import { PinnedMessagesDrawer } from '../components/chat/PinnedMessagesDrawer';
 import { CreateGroupModal } from '../components/modals/CreateGroupModal';
 import { CreateRoomModal } from '../components/modals/CreateRoomModal';
 import { GroupSettingsModal } from '../components/modals/GroupSettingsModal';
@@ -67,8 +68,9 @@ export const ChatPage = () => {
         />
       </main>
 
-      {/* 4. Right Collapsible Thread Drawer */}
+      {/* 4. Right Collapsible Thread Drawer & Pinned Messages Drawer */}
       <ThreadDrawer />
+      <PinnedMessagesDrawer />
 
       {/* Modals & Overlays */}
       <CreateGroupModal />

@@ -240,6 +240,9 @@ class DataStore {
         ],
         readBy: [{ userId: 'user_rahul' }, { userId: 'user_soham' }, { userId: 'user_aman' }],
         isEdited: false,
+        isPinned: true,
+        pinnedBy: { _id: 'user_rahul', username: 'Rahul' },
+        pinnedAt: new Date(Date.now() - 60 * 60000),
         isDeletedForEveryone: false,
         deletedFor: [],
         createdAt: new Date(Date.now() - 90 * 60000),
@@ -260,6 +263,9 @@ class DataStore {
         ],
         readBy: [{ userId: 'user_soham' }, { userId: 'user_rahul' }],
         isEdited: false,
+        isPinned: true,
+        pinnedBy: { _id: 'user_rahul', username: 'Rahul' },
+        pinnedAt: new Date(Date.now() - 60 * 60000),
         isDeletedForEveryone: false,
         deletedFor: [],
         createdAt: new Date(Date.now() - 80 * 60000),
@@ -276,6 +282,9 @@ class DataStore {
         reactions: [{ emoji: '🤔', userId: 'user_rahul', username: 'Rahul' }],
         readBy: [{ userId: 'user_aman' }, { userId: 'user_soham' }],
         isEdited: false,
+        isPinned: true,
+        pinnedBy: { _id: 'user_rahul', username: 'Rahul' },
+        pinnedAt: new Date(Date.now() - 60 * 60000),
         isDeletedForEveryone: false,
         deletedFor: [],
         createdAt: new Date(Date.now() - 65 * 60000),
@@ -295,6 +304,9 @@ class DataStore {
         ],
         readBy: [{ userId: 'user_soham' }, { userId: 'user_aman' }, { userId: 'user_rahul' }],
         isEdited: false,
+        isPinned: true,
+        pinnedBy: { _id: 'user_rahul', username: 'Rahul' },
+        pinnedAt: new Date(Date.now() - 60 * 60000),
         isDeletedForEveryone: false,
         deletedFor: [],
         createdAt: new Date(Date.now() - 40 * 60000),
@@ -316,6 +328,9 @@ class DataStore {
         ],
         readBy: [{ userId: 'user_soham' }, { userId: 'user_rahul' }],
         isEdited: false,
+        isPinned: true,
+        pinnedBy: { _id: 'user_rahul', username: 'Rahul' },
+        pinnedAt: new Date(Date.now() - 60 * 60000),
         isDeletedForEveryone: false,
         deletedFor: [],
         createdAt: new Date(Date.now() - 2 * 24 * 3600000),
@@ -332,6 +347,9 @@ class DataStore {
         reactions: [{ emoji: '✨', userId: 'user_soham', username: 'Soham' }],
         readBy: [{ userId: 'user_priya' }],
         isEdited: false,
+        isPinned: true,
+        pinnedBy: { _id: 'user_rahul', username: 'Rahul' },
+        pinnedAt: new Date(Date.now() - 60 * 60000),
         isDeletedForEveryone: false,
         deletedFor: [],
         createdAt: new Date(Date.now() - 24 * 3600000),
@@ -349,6 +367,9 @@ class DataStore {
         reactions: [],
         readBy: [{ userId: 'user_rahul' }, { userId: 'user_soham' }],
         isEdited: false,
+        isPinned: true,
+        pinnedBy: { _id: 'user_rahul', username: 'Rahul' },
+        pinnedAt: new Date(Date.now() - 60 * 60000),
         isDeletedForEveryone: false,
         deletedFor: [],
         createdAt: new Date(Date.now() - 30 * 60000),
@@ -365,6 +386,9 @@ class DataStore {
         reactions: [{ emoji: '👍', userId: 'user_rahul', username: 'Rahul' }],
         readBy: [{ userId: 'user_soham' }, { userId: 'user_rahul' }],
         isEdited: false,
+        isPinned: true,
+        pinnedBy: { _id: 'user_rahul', username: 'Rahul' },
+        pinnedAt: new Date(Date.now() - 60 * 60000),
         isDeletedForEveryone: false,
         deletedFor: [],
         createdAt: new Date(Date.now() - 25 * 60000),
@@ -381,6 +405,9 @@ class DataStore {
         reactions: [{ emoji: '🚀', userId: 'user_soham', username: 'Soham' }],
         readBy: [{ userId: 'user_rahul' }],
         isEdited: false,
+        isPinned: true,
+        pinnedBy: { _id: 'user_rahul', username: 'Rahul' },
+        pinnedAt: new Date(Date.now() - 60 * 60000),
         isDeletedForEveryone: false,
         deletedFor: [],
         createdAt: new Date(Date.now() - 10 * 60000),
@@ -827,6 +854,9 @@ class DataStore {
       readBy: [{ userId: senderId, readAt: new Date() }],
       isEdited: false,
       editedAt: null,
+      isPinned: false,
+      pinnedBy: null,
+      pinnedAt: null,
       isDeletedForEveryone: false,
       deletedFor: [],
       createdAt: new Date(),
@@ -913,6 +943,25 @@ class DataStore {
     }
 
     return this.formatMessage(msg);
+  }
+
+  togglePinMessage(messageId, userId) {
+    const msg = this.messages.get(messageId);
+    if (!msg) throw new Error('Message not found');
+    if (msg.isDeletedForEveryone) throw new Error('Cannot pin a deleted message');
+
+    const user = this.getUserById(userId);
+    msg.isPinned = !msg.isPinned;
+    msg.pinnedBy = msg.isPinned ? { _id: user ? user._id : userId, username: user ? user.username : 'User' } : null;
+    msg.pinnedAt = msg.isPinned ? new Date() : null;
+    msg.updatedAt = new Date();
+
+    return this.formatMessage(msg);
+  }
+
+  getPinnedMessages({ conversationId, roomId, userId }) {
+    const all = this.getMessages({ conversationId, roomId, limit: 100, userId });
+    return all.filter(m => m.isPinned && !m.isDeletedForEveryone);
   }
 
   markConversationRead(conversationId, userId) {

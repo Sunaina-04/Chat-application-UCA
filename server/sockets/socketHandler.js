@@ -179,7 +179,19 @@ export const registerSocketHandlers = (io) => {
       }
     });
 
-    // 8. Delivered & Read Receipts
+    // 8. Pin/Unpin Message
+    socket.on('message_pin', ({ messageId }, callback) => {
+      try {
+        const updated = store.togglePinMessage(messageId, userId);
+        const targetRoom = updated.roomId ? `group-room:${updated.roomId}` : `private-chat:${updated.conversationId}`;
+        io.to(targetRoom).emit('message_pinned', { message: updated });
+        if (callback) callback({ success: true, message: updated });
+      } catch (err) {
+        if (callback) callback({ error: err.message });
+      }
+    });
+
+    // 9. Delivered & Read Receipts
     socket.on('message_read', ({ conversationId }) => {
       if (!conversationId) return;
       store.markConversationRead(conversationId, userId);

@@ -10,6 +10,7 @@ import {
   CornerDownRight,
   MessageCircle,
   Copy,
+  Pin,
 } from 'lucide-react';
 import { Avatar } from '../common/Avatar';
 import { useAuth } from '../../context/AuthContext';
@@ -105,7 +106,7 @@ const renderMessageContent = (content) => {
 
 export const MessageItem = ({ message, onReply, isHighlighted = false }) => {
   const { user } = useAuth();
-  const { editMessage, deleteMessage, toggleReaction, openThread } = useChat();
+  const { editMessage, deleteMessage, toggleReaction, togglePinMessage, openThread } = useChat();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
@@ -160,7 +161,10 @@ export const MessageItem = ({ message, onReply, isHighlighted = false }) => {
 
   return (
     <div
-      className={`group relative flex gap-3 px-4 py-1.5 transition-colors rounded-xl mx-2 ${
+      id={`msg-${message._id}`}
+      className={`group relative flex gap-3 px-4 py-1.5 transition-all rounded-xl mx-2 ${
+        message.isPinned ? 'border-l-2 border-amber-500/70 bg-amber-500/[0.03]' : ''
+      } ${
         isHighlighted ? 'bg-brand-950/40 border border-brand-500/30' : 'hover:bg-chatdark-hover/40'
       }`}
     >
@@ -191,13 +195,22 @@ export const MessageItem = ({ message, onReply, isHighlighted = false }) => {
         )}
 
         {/* Sender Header */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-bold text-slate-200 hover:underline cursor-pointer">
             {message.sender?.username || 'User'}
           </span>
           <span className="text-[11px] text-slate-500">{formatTime(message.createdAt)}</span>
           {message.isEdited && !isDeleted && (
             <span className="text-[10px] text-slate-500 italic">(edited)</span>
+          )}
+          {message.isPinned && !isDeleted && (
+            <span
+              className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20"
+              title={message.pinnedBy?.username ? `Pinned by ${message.pinnedBy.username}` : 'Pinned message'}
+            >
+              <Pin className="w-2.5 h-2.5 fill-amber-400" />
+              Pinned
+            </span>
           )}
         </div>
 
@@ -339,6 +352,19 @@ export const MessageItem = ({ message, onReply, isHighlighted = false }) => {
             title={copied ? 'Copied to clipboard!' : 'Copy message text'}
           >
             {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+          </button>
+
+          {/* Pin / Unpin Button */}
+          <button
+            onClick={() => togglePinMessage(message._id)}
+            className={`p-1.5 rounded-lg transition-colors ${
+              message.isPinned
+                ? 'text-amber-400 bg-amber-500/20 hover:bg-amber-500/30'
+                : 'text-slate-400 hover:text-amber-300 hover:bg-chatdark-hover'
+            }`}
+            title={message.isPinned ? 'Unpin message' : 'Pin message to channel'}
+          >
+            <Pin className={`w-4 h-4 ${message.isPinned ? 'fill-amber-400' : ''}`} />
           </button>
 
           {/* Reply Button (starts reply context and opens thread drawer) */}

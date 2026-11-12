@@ -10,6 +10,7 @@ import {
   Video,
   X,
   Check,
+  Pin,
 } from 'lucide-react';
 import { useChat } from '../../context/ChatContext';
 import { useSocket } from '../../context/SocketContext';
@@ -17,7 +18,16 @@ import { useNotifications } from '../../context/NotificationContext';
 import { Avatar } from '../common/Avatar';
 
 export const ChatHeader = () => {
-  const { currentView, activeRoom, activeGroup, activeConversation, setIsSearchOpen } = useChat();
+  const {
+    currentView,
+    activeRoom,
+    activeGroup,
+    activeConversation,
+    setIsSearchOpen,
+    pinnedMessages,
+    isPinnedOpen,
+    setIsPinnedOpen,
+  } = useChat();
   const { isUserOnline, isConnected } = useSocket();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -106,6 +116,25 @@ export const ChatHeader = () => {
           />
           <span className="hidden sm:inline font-mono">{isConnected ? 'Live' : 'Connecting'}</span>
         </div>
+
+        {/* Pinned Messages Button */}
+        <button
+          onClick={() => setIsPinnedOpen(!isPinnedOpen)}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs transition-colors ${
+            pinnedMessages.length > 0
+              ? 'bg-amber-500/15 border-amber-500/30 text-amber-300 hover:bg-amber-500/25'
+              : 'bg-chatdark-card/40 border-chatdark-border text-slate-400 hover:text-slate-200 hover:bg-chatdark-card'
+          }`}
+          title={`${pinnedMessages.length} Pinned Messages`}
+        >
+          <Pin className={`w-3.5 h-3.5 ${pinnedMessages.length > 0 ? 'fill-amber-400 text-amber-400' : ''}`} />
+          <span className="font-semibold hidden sm:inline">Pinned</span>
+          {pinnedMessages.length > 0 && (
+            <span className="w-4 h-4 rounded-full bg-amber-500/30 text-amber-300 text-[10px] font-mono flex items-center justify-center">
+              {pinnedMessages.length}
+            </span>
+          )}
+        </button>
 
         {/* Search */}
         <button

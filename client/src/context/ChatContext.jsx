@@ -31,6 +31,7 @@ export const ChatProvider = ({ children }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDemoSwitcherOpen, setIsDemoSwitcherOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isPinnedOpen, setIsPinnedOpen] = useState(false);
 
   // Active channel key for typing indicators
   const activeChannelKey = activeRoomId
@@ -231,10 +232,36 @@ export const ChatProvider = ({ children }) => {
       );
     };
 
+    const handleMessagePinned = ({ message }) => {
+      setMessages(prev =>
+        prev.map(m =>
+          m._id === message._id
+            ? { ...m, isPinned: message.isPinned, pinnedBy: message.pinnedBy, pinnedAt: message.pinnedAt }
+            : m
+        )
+      );
+      if (activeThread && activeThread._id === message._id) {
+        setActiveThread(prev => ({
+          ...prev,
+          isPinned: message.isPinned,
+          pinnedBy: message.pinnedBy,
+          pinnedAt: message.pinnedAt,
+        }));
+      }
+      setThreadReplies(prev =>
+        prev.map(m =>
+          m._id === message._id
+            ? { ...m, isPinned: message.isPinned, pinnedBy: message.pinnedBy, pinnedAt: message.pinnedAt }
+            : m
+        )
+      );
+    };
+
     socket.on('receive_message', handleReceiveMessage);
     socket.on('message_edited', handleMessageEdited);
     socket.on('message_deleted', handleMessageDeleted);
     socket.on('reaction_updated', handleReactionUpdated);
+    socket.on('message_pinned', handleMessagePinned);
     socket.on('conversation_updated', handleConversationUpdated);
 
     return () => {
@@ -242,6 +269,7 @@ export const ChatProvider = ({ children }) => {
       socket.off('message_edited', handleMessageEdited);
       socket.off('message_deleted', handleMessageDeleted);
       socket.off('reaction_updated', handleReactionUpdated);
+      socket.off('message_pinned', handleMessagePinned);
       socket.off('conversation_updated', handleConversationUpdated);
     };
   }, [socket, activeRoomId, activeConversationId, activeThread, user?._id]);
@@ -350,6 +378,15 @@ export const ChatProvider = ({ children }) => {
     }
   };
 
+  const togglePinMessage = (messageId) => {
+    if (!socket) return;
+    socket.emit('message_pin', { messageId }, (res) => {
+      if (res?.error) {
+        console.error('Failed to toggle pin:', res.error);
+      }
+    });
+  };
+
   const openThread = (message) => {
     setActiveThread(message);
     loadThreadReplies(message._id);
@@ -364,6 +401,9 @@ export const ChatProvider = ({ children }) => {
   const activeGroup = groups.find(g => g._id === activeGroupId) || null;
   const activeRoom = activeGroup?.rooms?.find(r => r._id === activeRoomId) || null;
   const activeConversation = conversations.find(c => c._id === activeConversationId) || null;
+
+  // Filter pinned messages in active view
+  const pinnedMessages = messages.filter(m => m.isPinned && !m.isDeletedForEveryone);
 
   return (
     <ChatContext.Provider
@@ -380,6 +420,7 @@ export const ChatProvider = ({ children }) => {
         activeConversation,
         activeChannelKey,
         messages,
+        pinnedMessages,
         isLoadingMessages,
         activeThread,
         threadReplies,
@@ -397,6 +438,8 @@ export const ChatProvider = ({ children }) => {
         setIsDemoSwitcherOpen,
         isProfileOpen,
         setIsProfileOpen,
+        isPinnedOpen,
+        setIsPinnedOpen,
         // Operations
         selectGroup,
         selectRoom,
@@ -406,6 +449,7 @@ export const ChatProvider = ({ children }) => {
         editMessage,
         deleteMessage,
         toggleReaction,
+        togglePinMessage,
         createGroup,
         createRoom,
         openThread,

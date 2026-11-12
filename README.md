@@ -67,7 +67,13 @@ Whether you need focused community discussion rooms (`#general`, `#engineering`,
   - `#random` — Casual watercooler banter
 - Independent message histories, typing indicators, and permissions for each topic room.
 
-### 3. 🧵 Message Threads & Quoted Replies
+### 3. 📌 Pinned Messages & Channel Bookmarks
+- **Pin / Unpin Any Message**: Bookmark important announcements, code snippets, project guidelines, or links in any topic room or direct conversation.
+- **Dedicated Pinned Messages Drawer**: Click `📌 Pinned` in the chat header to review all pinned items for the active channel.
+- **Instant Jump-to-Message**: 1-click smooth scrolling with amber highlight animation jumping directly to the pinned message in the feed.
+- **Real-Time Synchronization**: Live Socket.IO event broadcasting (`message_pinned`) instantly synchronizes pinned states across all connected peers.
+
+### 4. 🧵 Message Threads & Quoted Replies
 - Reply to any message in personal chats or topic rooms using `parentMessageId`.
 - **Slide-out Thread Drawer**: A dedicated right-side panel showing the root message, reply chronology, and an isolated reply composer.
 - Quoted parent message previews in the main feed (`↳ Replying to ...`).
