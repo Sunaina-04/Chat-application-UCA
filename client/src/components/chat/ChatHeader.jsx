@@ -11,6 +11,8 @@ import {
   X,
   Check,
   Pin,
+  BarChart2,
+  Download,
 } from 'lucide-react';
 import { useChat } from '../../context/ChatContext';
 import { useSocket } from '../../context/SocketContext';
@@ -27,6 +29,8 @@ export const ChatHeader = () => {
     pinnedMessages,
     isPinnedOpen,
     setIsPinnedOpen,
+    setIsCreatePollOpen,
+    messages,
   } = useChat();
   const { isUserOnline, isConnected } = useSocket();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
@@ -39,6 +43,52 @@ export const ChatHeader = () => {
     if (mins < 60) return `Last seen ${mins}m ago`;
     const hours = Math.floor(mins / 60);
     return `Last seen ${hours}h ago`;
+  };
+
+  const handleExportTranscript = () => {
+    if (!messages || messages.length === 0) {
+      alert('No messages to export in this channel.');
+      return;
+    }
+
+    const title =
+      currentView === 'groups'
+        ? `${activeGroup?.name || 'Group'}_#${activeRoom?.name || 'general'}`
+        : `DM_with_${activeConversation?.participant?.username || 'user'}`;
+
+    let md = `# 💬 ChatSpace Transcript — ${title}\n`;
+    md += `*Exported on ${new Date().toLocaleString()}*\n\n`;
+    md += `---\n\n`;
+
+    messages.forEach((m) => {
+      const time = new Date(m.createdAt).toLocaleTimeString();
+      const sender = m.sender?.username || 'User';
+      md += `### **${sender}** · *${time}*\n`;
+      if (m.poll) {
+        md += `📊 **POLL: ${m.poll.question}**\n`;
+        (m.poll.options || []).forEach((opt, idx) => {
+          const vCount = opt.votes?.length || 0;
+          md += `- Option ${idx + 1}: ${opt.text} (${vCount} votes)\n`;
+        });
+        md += `*Total Participants: ${m.poll.totalVotes || 0}*\n\n`;
+      } else {
+        md += `${m.content || '(Attachment)'}\n\n`;
+      }
+      if (m.reactions && m.reactions.length > 0) {
+        const reactionStr = m.reactions.map((r) => `${r.emoji} (${r.username})`).join(' ');
+        md += `> Reactions: ${reactionStr}\n\n`;
+      }
+    });
+
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${title.toLowerCase().replace(/[^a-z0-9_-]/g, '_')}_transcript_${new Date().toISOString().slice(0, 10)}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -134,6 +184,25 @@ export const ChatHeader = () => {
               {pinnedMessages.length}
             </span>
           )}
+        </button>
+
+        {/* Create Poll Button */}
+        <button
+          onClick={() => setIsCreatePollOpen(true)}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-chatdark-border bg-chatdark-card/40 text-slate-300 hover:text-white hover:bg-chatdark-card transition-colors text-xs font-semibold"
+          title="Create a team poll"
+        >
+          <BarChart2 className="w-3.5 h-3.5 text-brand-400" />
+          <span className="hidden sm:inline">Poll</span>
+        </button>
+
+        {/* Export Transcript Button */}
+        <button
+          onClick={handleExportTranscript}
+          className="p-2 text-slate-400 hover:text-slate-200 hover:bg-chatdark-card rounded-lg transition-colors"
+          title="Export chat transcript (.md)"
+        >
+          <Download className="w-4 h-4" />
         </button>
 
         {/* Search */}

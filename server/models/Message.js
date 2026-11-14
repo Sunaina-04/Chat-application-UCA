@@ -26,6 +26,36 @@ const attachmentSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const pollOptionSchema = new mongoose.Schema(
+  {
+    id: String,
+    text: { type: String, required: true },
+    votes: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        username: String,
+      },
+    ],
+  },
+  { _id: false }
+);
+
+const pollSchema = new mongoose.Schema(
+  {
+    question: { type: String, required: true },
+    options: [pollOptionSchema],
+    isMultipleChoice: { type: Boolean, default: false },
+    isAnonymous: { type: Boolean, default: false },
+    isClosed: { type: Boolean, default: false },
+    closedAt: { type: Date, default: null },
+    totalVotes: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
 const messageSchema = new mongoose.Schema(
   {
     conversationId: {
@@ -51,6 +81,10 @@ const messageSchema = new mongoose.Schema(
     parentMessageId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Message',
+      default: null,
+    },
+    poll: {
+      type: pollSchema,
       default: null,
     },
     attachments: [attachmentSchema],

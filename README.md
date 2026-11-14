@@ -67,7 +67,18 @@ Whether you need focused community discussion rooms (`#general`, `#engineering`,
   - `#random` — Casual watercooler banter
 - Independent message histories, typing indicators, and permissions for each topic room.
 
-### 3. 📌 Pinned Messages & Channel Bookmarks
+### 3. 📊 Interactive Team Polls & Live Voting Engine
+- **Create Custom Polls**: Launch 2-to-6 option polls in any topic room or direct message.
+- **Flexible Voting Rules**: Supports single-choice or multiple-choice questions with optional anonymous voting mode.
+- **Animated Live Visuals**: Real-time percentage bars, vote count trackers, voter name chips, and dynamic leading choice indicators (`🏆`).
+- **Real-Time Synchronization**: Native Socket.IO events (`poll_vote`, `poll_close`, `poll_updated`) broadcast votes and status changes instantly across all connected clients.
+- **Author Controls**: Poll creators can close the poll at any time with an instant status badge change (`🔒 Closed`).
+
+### 4. 📥 Channel Transcript & Markdown Export
+- **1-Click Export**: Click `📥 Export` in the chat header to instantly download a formatted Markdown transcript (`#channel_transcript_YYYY-MM-DD.md`) of the active channel.
+- **Comprehensive Archival**: Formats chronological message histories, senders, timestamps, code blocks, emoji reactions, and poll results for meetings or team documentation.
+
+### 5. 📌 Pinned Messages & Channel Bookmarks
 - **Pin / Unpin Any Message**: Bookmark important announcements, code snippets, project guidelines, or links in any topic room or direct conversation.
 - **Dedicated Pinned Messages Drawer**: Click `📌 Pinned` in the chat header to review all pinned items for the active channel.
 - **Instant Jump-to-Message**: 1-click smooth scrolling with amber highlight animation jumping directly to the pinned message in the feed.
@@ -293,6 +304,9 @@ All real-time communication flows through scoped Socket.IO events authenticated 
 | `message_deleted` | Server ➔ Client | `{ messageId, deleteForEveryone, message }` | Updates UI message list after deletion |
 | `reaction_toggle` | Client ➔ Server | `{ messageId, emoji }` | Toggles user reaction on target message |
 | `reaction_updated` | Server ➔ Client | `{ message }` | Broadcasts updated reaction counts and users |
+| `poll_vote` | Client ➔ Server | `{ messageId, optionId }` | Toggles vote on a poll option |
+| `poll_close` | Client ➔ Server | `{ messageId }` | Closes poll for future voting |
+| `poll_updated` | Server ➔ Client | `{ message }` | Broadcasts updated poll results and state |
 | `message_read` | Client ➔ Server | `{ conversationId }` | Marks conversation as read by active user |
 | `messages_read_by_user`| Server ➔ Client | `{ conversationId, userId, readAt }` | Notifies sender of read receipt confirmation |
 | `user_online` | Server ➔ Client | `{ userId, status: 'online' }` | Broadcasts presence online event |
@@ -331,7 +345,13 @@ All protected endpoints require the HTTP header:
 - `GET /api/rooms/:roomId/messages` — Fetch message history for a topic room.
 
 ### Messages & Threads
+- `POST /api/messages` — Send a message in a conversation or topic room.
+- `POST /api/messages/poll` — Create and post a new interactive poll.
+- `POST /api/messages/:id/poll/vote` — Cast or toggle a vote on a poll option.
+- `POST /api/messages/:id/poll/close` — Close an active poll.
+- `GET /api/messages/pinned` — Retrieve pinned messages for a channel.
 - `POST /api/messages/:id/reactions` — Toggle emoji reaction on a message.
+- `PATCH /api/messages/:id/pin` — Pin or unpin a message.
 - `PUT /api/messages/:id` — Edit an existing message.
 - `DELETE /api/messages/:id` — Delete a message.
 

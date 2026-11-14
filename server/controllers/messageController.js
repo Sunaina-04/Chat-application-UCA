@@ -169,3 +169,87 @@ export const getPinnedMessages = async (req, res, next) => {
     next(error);
   }
 };
+
+export const createPollMessage = async (req, res, next) => {
+  try {
+    const { conversationId, roomId, question, options, isMultipleChoice, isAnonymous } = req.body;
+
+    if (!question || !question.trim()) {
+      return res.status(400).json({ success: false, message: 'Poll question is required.' });
+    }
+    if (!options || !Array.isArray(options) || options.length < 2) {
+      return res.status(400).json({ success: false, message: 'At least 2 options are required.' });
+    }
+
+    if (conversationId) {
+      const conv = store.getConversationById(conversationId);
+      if (!conv || !conv.participants.includes(req.user._id)) {
+        return res.status(403).json({ success: false, message: 'Unauthorized to post poll in this conversation.' });
+      }
+    } else if (roomId) {
+      const room = store.getRoomById(roomId);
+      if (!room || !store.isGroupMember(room.groupId, req.user._id)) {
+        return res.status(403).json({ success: false, message: 'Unauthorized to post poll in this room.' });
+      }
+    } else {
+      return res.status(400).json({ success: false, message: 'conversationId or roomId required.' });
+    }
+
+    const message = store.createPoll({
+      conversationId,
+      roomId,
+      senderId: req.user._id,
+      question,
+      options,
+      isMultipleChoice,
+      isAnonymous,
+    });
+
+    if (req.io) {
+      const targetRoom = roomId ? `group-room:${roomId}` : `private-chat:${conversationId}`;
+      req.io.to(targetRoom).emit('receive_message', { message, roomId, conversationId });
+    }
+
+    res.status(201).json({ success: true, message });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const votePoll = async (req, res, next) => {
+  try {
+    const { messageId } = req.params;
+    const { optionId } = req.body;
+
+    if (!optionId) {
+      return res.status(400).json({ success: false, message: 'Option ID is required.' });
+    }
+
+    const message = store.votePoll(messageId, req.user._id, optionId);
+
+    if (req.io) {
+      const targetRoom = message.roomId ? `group-room:${message.roomId}` : `private-chat:${message.conversationId}`;
+      req.io.to(targetRoom).emit('poll_updated', { message });
+    }
+
+    res.json({ success: true, message });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const closePoll = async (req, res, next) => {
+  try {
+    const { messageId } = req.params;
+    const message = store.closePoll(messageId, req.user._id);
+
+    if (req.io) {
+      const targetRoom = message.roomId ? `group-room:${message.roomId}` : `private-chat:${message.conversationId}`;
+      req.io.to(targetRoom).emit('poll_updated', { message });
+    }
+
+    res.json({ success: true, message });
+  } catch (error) {
+    next(error);
+  }
+};

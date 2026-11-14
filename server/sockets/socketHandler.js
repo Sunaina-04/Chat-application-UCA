@@ -191,6 +191,29 @@ export const registerSocketHandlers = (io) => {
       }
     });
 
+    // 8.1 Poll Vote & Close
+    socket.on('poll_vote', ({ messageId, optionId }, callback) => {
+      try {
+        const updated = store.votePoll(messageId, userId, optionId);
+        const targetRoom = updated.roomId ? `group-room:${updated.roomId}` : `private-chat:${updated.conversationId}`;
+        io.to(targetRoom).emit('poll_updated', { message: updated });
+        if (callback) callback({ success: true, message: updated });
+      } catch (err) {
+        if (callback) callback({ error: err.message });
+      }
+    });
+
+    socket.on('poll_close', ({ messageId }, callback) => {
+      try {
+        const updated = store.closePoll(messageId, userId);
+        const targetRoom = updated.roomId ? `group-room:${updated.roomId}` : `private-chat:${updated.conversationId}`;
+        io.to(targetRoom).emit('poll_updated', { message: updated });
+        if (callback) callback({ success: true, message: updated });
+      } catch (err) {
+        if (callback) callback({ error: err.message });
+      }
+    });
+
     // 9. Delivered & Read Receipts
     socket.on('message_read', ({ conversationId }) => {
       if (!conversationId) return;

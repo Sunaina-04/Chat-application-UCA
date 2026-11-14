@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Smile, Paperclip, X, Image as ImageIcon, Sparkles, Code } from 'lucide-react';
+import { Send, Smile, Paperclip, X, Image as ImageIcon, Sparkles, Code, BarChart2 } from 'lucide-react';
 import { useChat } from '../../context/ChatContext';
 import { useSocket } from '../../context/SocketContext';
 
@@ -10,7 +10,7 @@ const EMOJI_PALETTE = [
 ];
 
 export const MessageComposer = ({ replyingTo, onCancelReply, placeholder = 'Type a message...' }) => {
-  const { sendMessage, activeRoom, activeConversation, currentView } = useChat();
+  const { sendMessage, activeRoom, activeConversation, currentView, setIsCreatePollOpen } = useChat();
   const { emitTypingStart, emitTypingStop } = useSocket();
 
   const [text, setText] = useState('');
@@ -206,6 +206,16 @@ export const MessageComposer = ({ replyingTo, onCancelReply, placeholder = 'Type
           title="Insert Code Block (```)"
         >
           <Code className="w-4 h-4" />
+        </button>
+
+        {/* Create Live Poll Button */}
+        <button
+          type="button"
+          onClick={() => setIsCreatePollOpen(true)}
+          className="p-2 text-slate-400 hover:text-brand-400 hover:bg-chatdark-hover rounded-xl transition-colors"
+          title="Create a Live Poll"
+        >
+          <BarChart2 className="w-4 h-4" />
         </button>
 
         {/* Text Input */}

@@ -13,6 +13,7 @@ import {
   Pin,
 } from 'lucide-react';
 import { Avatar } from '../common/Avatar';
+import { PollCard } from './PollCard';
 import { useAuth } from '../../context/AuthContext';
 import { useChat } from '../../context/ChatContext';
 
@@ -106,7 +107,7 @@ const renderMessageContent = (content) => {
 
 export const MessageItem = ({ message, onReply, isHighlighted = false }) => {
   const { user } = useAuth();
-  const { editMessage, deleteMessage, toggleReaction, togglePinMessage, openThread } = useChat();
+  const { editMessage, deleteMessage, toggleReaction, togglePinMessage, openThread, votePoll, closePoll } = useChat();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
@@ -232,13 +233,28 @@ export const MessageItem = ({ message, onReply, isHighlighted = false }) => {
             </div>
           </div>
         ) : (
-          <div
-            className={`text-sm leading-relaxed break-words whitespace-pre-wrap ${
-              isDeleted ? 'italic text-slate-500 select-none' : 'text-slate-200'
-            }`}
-          >
-            {isDeleted ? message.content : renderMessageContent(message.content)}
-          </div>
+          <>
+            {!message.poll && (
+              <div
+                className={`text-sm leading-relaxed break-words whitespace-pre-wrap ${
+                  isDeleted ? 'italic text-slate-500 select-none' : 'text-slate-200'
+                }`}
+              >
+                {isDeleted ? message.content : renderMessageContent(message.content)}
+              </div>
+            )}
+
+            {/* Interactive Poll Card */}
+            {message.poll && (
+              <PollCard
+                message={message}
+                poll={message.poll}
+                onVote={votePoll}
+                onClose={closePoll}
+                currentUserId={user?._id}
+              />
+            )}
+          </>
         )}
 
         {/* Attachments Preview if any */}

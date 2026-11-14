@@ -32,6 +32,7 @@ export const ChatProvider = ({ children }) => {
   const [isDemoSwitcherOpen, setIsDemoSwitcherOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isPinnedOpen, setIsPinnedOpen] = useState(false);
+  const [isCreatePollOpen, setIsCreatePollOpen] = useState(false);
 
   // Active channel key for typing indicators
   const activeChannelKey = activeRoomId
@@ -257,11 +258,20 @@ export const ChatProvider = ({ children }) => {
       );
     };
 
+    const handlePollUpdated = ({ message }) => {
+      setMessages(prev => prev.map(m => (m._id === message._id ? { ...m, ...message } : m)));
+      if (activeThread && activeThread._id === message._id) {
+        setActiveThread(prev => ({ ...prev, ...message }));
+      }
+      setThreadReplies(prev => prev.map(m => (m._id === message._id ? { ...m, ...message } : m)));
+    };
+
     socket.on('receive_message', handleReceiveMessage);
     socket.on('message_edited', handleMessageEdited);
     socket.on('message_deleted', handleMessageDeleted);
     socket.on('reaction_updated', handleReactionUpdated);
     socket.on('message_pinned', handleMessagePinned);
+    socket.on('poll_updated', handlePollUpdated);
     socket.on('conversation_updated', handleConversationUpdated);
 
     return () => {
@@ -270,6 +280,7 @@ export const ChatProvider = ({ children }) => {
       socket.off('message_deleted', handleMessageDeleted);
       socket.off('reaction_updated', handleReactionUpdated);
       socket.off('message_pinned', handleMessagePinned);
+      socket.off('poll_updated', handlePollUpdated);
       socket.off('conversation_updated', handleConversationUpdated);
     };
   }, [socket, activeRoomId, activeConversationId, activeThread, user?._id]);
@@ -397,6 +408,64 @@ export const ChatProvider = ({ children }) => {
     setThreadReplies([]);
   };
 
+  const createPoll = async ({ question, options, isMultipleChoice, isAnonymous }) => {
+    try {
+      const payload = {
+        question,
+        options,
+        isMultipleChoice: Boolean(isMultipleChoice),
+        isAnonymous: Boolean(isAnonymous),
+        roomId: currentView === 'groups' ? activeRoomId : null,
+        conversationId: currentView === 'dms' ? activeConversationId : null,
+      };
+      const res = await api.post('/messages/poll', payload);
+      if (res.success) {
+        setIsCreatePollOpen(false);
+        sounds.playSend();
+        return res.message;
+      }
+    } catch (err) {
+      console.error('Failed to create poll:', err);
+      throw err;
+    }
+  };
+
+  const votePoll = (messageId, optionId) => {
+    if (socket && socket.connected) {
+      socket.emit('poll_vote', { messageId, optionId }, (res) => {
+        if (res?.error) {
+          console.error('Poll vote error:', res.error);
+        }
+      });
+    } else {
+      api.post(`/messages/${messageId}/poll/vote`, { optionId })
+        .then(res => {
+          if (res.success) {
+            setMessages(prev => prev.map(m => (m._id === messageId ? res.message : m)));
+          }
+        })
+        .catch(err => console.error('Poll vote API error:', err));
+    }
+  };
+
+  const closePoll = (messageId) => {
+    if (socket && socket.connected) {
+      socket.emit('poll_close', { messageId }, (res) => {
+        if (res?.error) {
+          console.error('Poll close error:', res.error);
+        }
+      });
+    } else {
+      api.post(`/messages/${messageId}/poll/close`)
+        .then(res => {
+          if (res.success) {
+            setMessages(prev => prev.map(m => (m._id === messageId ? res.message : m)));
+          }
+        })
+        .catch(err => console.error('Poll close API error:', err));
+    }
+  };
+
   // Find active group and active room object
   const activeGroup = groups.find(g => g._id === activeGroupId) || null;
   const activeRoom = activeGroup?.rooms?.find(r => r._id === activeRoomId) || null;
@@ -440,6 +509,8 @@ export const ChatProvider = ({ children }) => {
         setIsProfileOpen,
         isPinnedOpen,
         setIsPinnedOpen,
+        isCreatePollOpen,
+        setIsCreatePollOpen,
         // Operations
         selectGroup,
         selectRoom,
@@ -450,6 +521,9 @@ export const ChatProvider = ({ children }) => {
         deleteMessage,
         toggleReaction,
         togglePinMessage,
+        createPoll,
+        votePoll,
+        closePoll,
         createGroup,
         createRoom,
         openThread,

@@ -413,6 +413,65 @@ class DataStore {
         createdAt: new Date(Date.now() - 10 * 60000),
         updatedAt: new Date(Date.now() - 10 * 60000),
       },
+      {
+        _id: 'msg_poll_demo_1',
+        roomId: 'room_projects',
+        conversationId: null,
+        senderId: 'user_soham',
+        content: '📊 Poll: Which tech stack should we build our next hackathon MVP with?',
+        poll: {
+          question: 'Which tech stack should we build our next hackathon MVP with?',
+          options: [
+            {
+              id: 'opt_1',
+              text: 'React + Node.js (Full-Stack JS)',
+              votes: [
+                { userId: 'user_soham', username: 'Soham' },
+                { userId: 'user_rahul', username: 'Rahul' },
+              ],
+            },
+            {
+              id: 'opt_2',
+              text: 'Next.js 15 + Tailwind CSS',
+              votes: [
+                { userId: 'user_priya', username: 'Priya' },
+              ],
+            },
+            {
+              id: 'opt_3',
+              text: 'FastAPI + Python AI Microservices',
+              votes: [
+                { userId: 'user_aman', username: 'Aman' },
+              ],
+            },
+            {
+              id: 'opt_4',
+              text: 'Go / Rust High-Performance Engine',
+              votes: [],
+            },
+          ],
+          isMultipleChoice: false,
+          isAnonymous: false,
+          isClosed: false,
+          closedAt: null,
+          totalVotes: 4,
+        },
+        parentMessageId: null,
+        attachments: [],
+        reactions: [
+          { emoji: '🔥', userId: 'user_rahul', username: 'Rahul' },
+          { emoji: '🚀', userId: 'user_aman', username: 'Aman' },
+        ],
+        readBy: [{ userId: 'user_soham' }, { userId: 'user_rahul' }, { userId: 'user_aman' }, { userId: 'user_priya' }],
+        isEdited: false,
+        isPinned: true,
+        pinnedBy: { _id: 'user_soham', username: 'Soham' },
+        pinnedAt: new Date(Date.now() - 30 * 60000),
+        isDeletedForEveryone: false,
+        deletedFor: [],
+        createdAt: new Date(Date.now() - 35 * 60000),
+        updatedAt: new Date(Date.now() - 35 * 60000),
+      },
     ];
 
     demoMessages.forEach(m => this.messages.set(m._id, m));
@@ -840,7 +899,7 @@ class DataStore {
     };
   }
 
-  createMessage({ conversationId, roomId, senderId, content, parentMessageId = null, attachments = [] }) {
+  createMessage({ conversationId, roomId, senderId, content, parentMessageId = null, attachments = [], poll = null }) {
     const _id = `msg_${uuidv4().slice(0, 8)}`;
     const msg = {
       _id,
@@ -850,6 +909,7 @@ class DataStore {
       content,
       parentMessageId: parentMessageId || null,
       attachments: attachments || [],
+      poll: poll || null,
       reactions: [],
       readBy: [{ userId: senderId, readAt: new Date() }],
       isEdited: false,
@@ -962,6 +1022,103 @@ class DataStore {
   getPinnedMessages({ conversationId, roomId, userId }) {
     const all = this.getMessages({ conversationId, roomId, limit: 100, userId });
     return all.filter(m => m.isPinned && !m.isDeletedForEveryone);
+  }
+
+  createPoll({ conversationId, roomId, senderId, question, options, isMultipleChoice = false, isAnonymous = false }) {
+    if (!question || !question.trim()) {
+      throw new Error('Poll question cannot be empty');
+    }
+    const cleanOptions = (options || [])
+      .map(o => (typeof o === 'string' ? o.trim() : (o.text || '').trim()))
+      .filter(Boolean);
+
+    if (cleanOptions.length < 2) {
+      throw new Error('A poll must have at least 2 options');
+    }
+
+    const poll = {
+      question: question.trim(),
+      options: cleanOptions.map((optText, idx) => ({
+        id: `opt_${idx + 1}_${uuidv4().slice(0, 4)}`,
+        text: optText,
+        votes: [],
+      })),
+      isMultipleChoice: Boolean(isMultipleChoice),
+      isAnonymous: Boolean(isAnonymous),
+      isClosed: false,
+      closedAt: null,
+      totalVotes: 0,
+    };
+
+    return this.createMessage({
+      conversationId,
+      roomId,
+      senderId,
+      content: `📊 Poll: ${question.trim()}`,
+      poll,
+    });
+  }
+
+  votePoll(messageId, userId, optionId) {
+    const msg = this.messages.get(messageId);
+    if (!msg) throw new Error('Message not found');
+    if (!msg.poll) throw new Error('Message does not contain a poll');
+    if (msg.poll.isClosed) throw new Error('This poll is closed');
+
+    const user = this.getUserById(userId);
+    const username = user ? user.username : 'User';
+
+    const targetOpt = msg.poll.options.find(o => o.id === optionId);
+    if (!targetOpt) throw new Error('Invalid poll option');
+
+    const alreadyVotedIndex = targetOpt.votes.findIndex(v => v.userId === userId);
+
+    if (msg.poll.isMultipleChoice) {
+      // Toggle vote on target option
+      if (alreadyVotedIndex >= 0) {
+        targetOpt.votes.splice(alreadyVotedIndex, 1);
+      } else {
+        targetOpt.votes.push({ userId, username });
+      }
+    } else {
+      // Single choice: remove user's vote from all options
+      let wasSelected = false;
+      msg.poll.options.forEach(opt => {
+        const idx = opt.votes.findIndex(v => v.userId === userId);
+        if (idx >= 0) {
+          if (opt.id === optionId) wasSelected = true;
+          opt.votes.splice(idx, 1);
+        }
+      });
+      if (!wasSelected) {
+        targetOpt.votes.push({ userId, username });
+      }
+    }
+
+    // Compute unique voters count
+    const uniqueVoters = new Set();
+    msg.poll.options.forEach(opt => {
+      opt.votes.forEach(v => uniqueVoters.add(v.userId));
+    });
+    msg.poll.totalVotes = uniqueVoters.size;
+    msg.updatedAt = new Date();
+
+    return this.formatMessage(msg);
+  }
+
+  closePoll(messageId, userId) {
+    const msg = this.messages.get(messageId);
+    if (!msg) throw new Error('Message not found');
+    if (!msg.poll) throw new Error('Message does not contain a poll');
+    if (msg.senderId !== userId) {
+      throw new Error('Only the poll creator can close this poll');
+    }
+
+    msg.poll.isClosed = true;
+    msg.poll.closedAt = new Date();
+    msg.updatedAt = new Date();
+
+    return this.formatMessage(msg);
   }
 
   markConversationRead(conversationId, userId) {

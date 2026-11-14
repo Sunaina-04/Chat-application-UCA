@@ -11,6 +11,7 @@ import { ThreadDrawer } from '../components/chat/ThreadDrawer';
 import { PinnedMessagesDrawer } from '../components/chat/PinnedMessagesDrawer';
 import { CreateGroupModal } from '../components/modals/CreateGroupModal';
 import { CreateRoomModal } from '../components/modals/CreateRoomModal';
+import { CreatePollModal } from '../components/modals/CreatePollModal';
 import { GroupSettingsModal } from '../components/modals/GroupSettingsModal';
 import { GlobalSearchModal } from '../components/modals/GlobalSearchModal';
 import { DemoSwitcherModal } from '../components/modals/DemoSwitcherModal';
@@ -75,6 +76,7 @@ export const ChatPage = () => {
       {/* Modals & Overlays */}
       <CreateGroupModal />
       <CreateRoomModal />
+      <CreatePollModal />
       <GroupSettingsModal />
       <GlobalSearchModal />
       <DemoSwitcherModal />
