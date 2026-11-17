@@ -13,6 +13,7 @@ import apiRoutes from './routes/index.js';
 import { registerSocketHandlers } from './sockets/socketHandler.js';
 import { notFoundHandler, errorHandler } from './middleware/errorMiddleware.js';
 import { logger } from './utils/logger.js';
+import { assertJwtSecretConfigured } from './config/jwt.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,6 +26,8 @@ if (fs.existsSync(path.join(__dirname, '.env'))) {
 } else {
   dotenv.config();
 }
+
+assertJwtSecretConfigured();
 
 const app = express();
 const server = http.createServer(app);

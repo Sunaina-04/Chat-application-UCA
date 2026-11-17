@@ -383,8 +383,8 @@ The Express backend builds and serves the Vite production bundle directly from `
    - **Start Command**: `npm start`
 2. Set Environment Variables:
    - `NODE_ENV=production`
-   - `JWT_SECRET=<your_secure_random_key>`
-   - `MONGODB_URI=<your_atlas_connection_string>`
+   - `JWT_SECRET=`
+   - `MONGODB_URI=`
 3. The server starts on `PORT`, serves API routes at `/api/*`, WebSockets at `/socket.io/*`, and single-page React frontend on all other routes.
 
 ### Option B: Decoupled (Vercel Frontend + Render Backend)
