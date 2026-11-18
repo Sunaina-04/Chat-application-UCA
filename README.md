@@ -271,14 +271,14 @@ Visit **[http://localhost:5173](http://localhost:5173)** in your browser!
 
 ## 🔑 Pre-Seeded Demo Accounts
 
-ChatSpace comes pre-configured with active demo accounts. Use them directly on the login screen or via the **1-Click Demo Switcher** inside the app:
+ChatSpace comes pre-configured with active demo accounts. Use them directly on the login screen via **1-Click Quick Demo Sign-In** or the **Demo Switcher** inside the app. For standard password-based sign-in in development, set `DEMO_USER_PASSWORD` in your server `.env` (by default, cryptographically secure random passwords are generated per boot):
 
-| Username | Email | Password | Role | Specialization |
+| Username | Email | Sign-In Method | Role | Specialization |
 |---|---|---|---|---|
-| **Soham** | `soham@chatspace.dev` | `demo123` | **Owner** | Full-Stack Systems |
-| **Rahul** | `rahul@chatspace.dev` | `demo123` | **Admin** | Algorithms & Backend |
-| **Aman** | `aman@chatspace.dev` | `demo123` | **Member** | Cloud & Distributed Systems |
-| **Priya** | `priya@chatspace.dev` | `demo123` | **Member** | UI/UX & Design Systems |
+| **Soham** | `soham@chatspace.dev` | 1-Click Demo / `DEMO_USER_PASSWORD` | **Owner** | Full-Stack Systems |
+| **Rahul** | `rahul@chatspace.dev` | 1-Click Demo / `DEMO_USER_PASSWORD` | **Admin** | Algorithms & Backend |
+| **Aman** | `aman@chatspace.dev` | 1-Click Demo / `DEMO_USER_PASSWORD` | **Member** | Cloud & Distributed Systems |
+| **Priya** | `priya@chatspace.dev` | 1-Click Demo / `DEMO_USER_PASSWORD` | **Member** | UI/UX & Design Systems |
 
 > 💡 **Multi-User Testing Tip**: Open one tab with **Soham** and another tab (or Incognito window) with **Rahul**. Send messages, trigger typing indicators, add reactions, and watch instant live synchronization!
 

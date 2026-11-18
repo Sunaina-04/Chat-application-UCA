@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger.js';
@@ -17,8 +18,8 @@ class DataStore {
   }
 
   async initDemoData() {
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash('demo123', salt);
+    // Generate unique random passwords for demo accounts to prevent default credential exploitation
+    const envDemoPassword = process.env.DEMO_USER_PASSWORD;
 
     // 1. Pre-seeded Users
     const demoUsers = [
@@ -26,7 +27,6 @@ class DataStore {
         _id: 'user_soham',
         username: 'Soham',
         email: 'soham@chatspace.dev',
-        passwordHash,
         avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
         bio: 'Full-Stack Dev & System Architect',
         status: 'online',
@@ -37,7 +37,6 @@ class DataStore {
         _id: 'user_rahul',
         username: 'Rahul',
         email: 'rahul@chatspace.dev',
-        passwordHash,
         avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80',
         bio: 'Competitive Programmer & Graph Theory geek',
         status: 'online',
@@ -48,7 +47,6 @@ class DataStore {
         _id: 'user_aman',
         username: 'Aman',
         email: 'aman@chatspace.dev',
-        passwordHash,
         avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
         bio: 'Backend & Distributed Systems Wizard',
         status: 'away',
@@ -59,7 +57,6 @@ class DataStore {
         _id: 'user_priya',
         username: 'Priya',
         email: 'priya@chatspace.dev',
-        passwordHash,
         avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
         bio: 'Product Designer & UI/UX Specialist',
         status: 'offline',
@@ -68,7 +65,12 @@ class DataStore {
       },
     ];
 
-    demoUsers.forEach(u => this.users.set(u._id, u));
+    for (const u of demoUsers) {
+      const salt = await bcrypt.genSalt(10);
+      const userPassword = envDemoPassword || crypto.randomBytes(16).toString('base64url');
+      u.passwordHash = await bcrypt.hash(userPassword, salt);
+      this.users.set(u._id, u);
+    }
     this.onlineUsers.add('user_soham');
     this.onlineUsers.add('user_rahul');
 

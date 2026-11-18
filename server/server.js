@@ -35,15 +35,47 @@ const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 const CLIENT_URL = process.env.CLIENT_URL;
 
-// Flexible CORS origins (Supports Vercel production & preview deployments)
+// Secure CORS configuration
+const allowedOriginsList = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+
 const cleanClientUrl = CLIENT_URL ? CLIENT_URL.replace(/\/$/, '') : null;
+if (cleanClientUrl && cleanClientUrl !== '*') {
+  allowedOriginsList.push(cleanClientUrl);
+}
+
+// Development origins (permitted only when not in production)
+const devOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:5000',
+];
+
+// Scope Vercel preview deploys strictly to this project rather than accepting all *.vercel.app origins
+const getVercelProjectRegex = () => {
+  const vercelProject =
+    process.env.VERCEL_PROJECT_NAME ||
+    (cleanClientUrl && cleanClientUrl.match(/^https:\/\/([a-z0-9-]+)\.vercel\.app$/i)?.[1]);
+  if (vercelProject) {
+    const escaped = vercelProject.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+    return new RegExp(`^https:\\/\\/${escaped}(-[a-z0-9-]+)?\\.vercel\\.app$`, 'i');
+  }
+  return null;
+};
+const vercelPreviewRegex = getVercelProjectRegex();
+
 const isAllowedOrigin = (origin) => {
   if (!origin) return true; // allow same-origin, curl, server-to-server
-  if (!cleanClientUrl || cleanClientUrl === '*') return true;
   const cleanOrigin = origin.replace(/\/$/, '');
-  if (cleanOrigin === cleanClientUrl) return true;
-  if (cleanOrigin === 'http://localhost:5173' || cleanOrigin === 'http://127.0.0.1:5173') return true;
-  if (cleanOrigin.endsWith('.vercel.app')) return true; // support all Vercel deploys
+
+  if (allowedOriginsList.includes(cleanOrigin)) return true;
+  if (process.env.NODE_ENV !== 'production' && devOrigins.includes(cleanOrigin)) return true;
+  if (vercelPreviewRegex && vercelPreviewRegex.test(cleanOrigin)) return true;
+
   return false;
 };
 
@@ -131,7 +163,7 @@ const startServer = async () => {
     server.listen(PORT, () => {
       logger.success(`🚀 ChatSpace Server running on http://localhost:${PORT}`);
       logger.info(`📡 Socket.IO initialized and ready for real-time messaging`);
-      logger.info(`✨ Demo accounts available: Soham, Rahul, Aman, Priya (Password: demo123)`);
+      logger.info(`✨ Demo accounts available: Soham, Rahul, Aman, Priya`);
     });
   } catch (error) {
     logger.error('Failed to start server:', error);

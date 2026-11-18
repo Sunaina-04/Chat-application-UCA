@@ -81,6 +81,9 @@ export const login = async (req, res, next) => {
 
 export const demoLogin = async (req, res, next) => {
   try {
+    if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEMO_ACCOUNTS !== 'true') {
+      return res.status(403).json({ success: false, message: 'Demo quick login is disabled in production environments.' });
+    }
     const { userId } = req.body;
     const targetUserId = userId || 'user_soham';
 

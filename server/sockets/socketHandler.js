@@ -37,12 +37,19 @@ export const registerSocketHandlers = (io) => {
     store.setUserStatus(userId, 'online');
     io.emit('user_online', { userId, status: 'online' });
 
-    // 2. Room / Conversation Room Join & Leave
-    socket.on('join_conversation', ({ conversationId }) => {
+    // 2. Room / Conversation Room Join & Leave (Authorized)
+    socket.on('join_conversation', ({ conversationId }, callback) => {
       if (!conversationId) return;
+      const conv = store.getConversationById(conversationId);
+      if (!conv || !conv.participants.includes(userId)) {
+        logger.warn(`Unauthorized join_conversation attempt by ${username} (${userId}) for conversation ${conversationId}`);
+        if (callback) callback({ error: 'Unauthorized to join this conversation.' });
+        return;
+      }
       const roomKey = `private-chat:${conversationId}`;
       socket.join(roomKey);
       logger.info(`User ${username} joined ${roomKey}`);
+      if (callback) callback({ success: true });
     });
 
     socket.on('leave_conversation', ({ conversationId }) => {
@@ -51,11 +58,18 @@ export const registerSocketHandlers = (io) => {
       socket.leave(roomKey);
     });
 
-    socket.on('join_room', ({ roomId }) => {
+    socket.on('join_room', ({ roomId }, callback) => {
       if (!roomId) return;
+      const room = store.getRoomById(roomId);
+      if (!room || !store.isGroupMember(room.groupId, userId)) {
+        logger.warn(`Unauthorized join_room attempt by ${username} (${userId}) for room ${roomId}`);
+        if (callback) callback({ error: 'Unauthorized to join this room.' });
+        return;
+      }
       const roomKey = `group-room:${roomId}`;
       socket.join(roomKey);
       logger.info(`User ${username} joined ${roomKey}`);
+      if (callback) callback({ success: true });
     });
 
     socket.on('leave_room', ({ roomId }) => {
@@ -72,6 +86,21 @@ export const registerSocketHandlers = (io) => {
         if (!content && (!attachments || attachments.length === 0)) {
           if (callback) callback({ error: 'Message cannot be empty.' });
           return;
+        }
+
+        // Authorization check matching REST controllers
+        if (conversationId) {
+          const conv = store.getConversationById(conversationId);
+          if (!conv || !conv.participants.includes(userId)) {
+            if (callback) callback({ error: 'Unauthorized to send message to this conversation.' });
+            return;
+          }
+        } else if (roomId) {
+          const room = store.getRoomById(roomId);
+          if (!room || !store.isGroupMember(room.groupId, userId)) {
+            if (callback) callback({ error: 'Unauthorized to send message to this room.' });
+            return;
+          }
         }
 
         const message = store.createMessage({
@@ -117,8 +146,12 @@ export const registerSocketHandlers = (io) => {
     socket.on('typing_start', ({ conversationId, roomId }) => {
       const payload = { userId, username, conversationId, roomId };
       if (roomId) {
+        const room = store.getRoomById(roomId);
+        if (!room || !store.isGroupMember(room.groupId, userId)) return;
         socket.to(`group-room:${roomId}`).emit('typing_start', payload);
       } else if (conversationId) {
+        const conv = store.getConversationById(conversationId);
+        if (!conv || !conv.participants.includes(userId)) return;
         socket.to(`private-chat:${conversationId}`).emit('typing_start', payload);
       }
     });
@@ -126,8 +159,12 @@ export const registerSocketHandlers = (io) => {
     socket.on('typing_stop', ({ conversationId, roomId }) => {
       const payload = { userId, username, conversationId, roomId };
       if (roomId) {
+        const room = store.getRoomById(roomId);
+        if (!room || !store.isGroupMember(room.groupId, userId)) return;
         socket.to(`group-room:${roomId}`).emit('typing_stop', payload);
       } else if (conversationId) {
+        const conv = store.getConversationById(conversationId);
+        if (!conv || !conv.participants.includes(userId)) return;
         socket.to(`private-chat:${conversationId}`).emit('typing_stop', payload);
       }
     });
@@ -217,6 +254,8 @@ export const registerSocketHandlers = (io) => {
     // 9. Delivered & Read Receipts
     socket.on('message_read', ({ conversationId }) => {
       if (!conversationId) return;
+      const conv = store.getConversationById(conversationId);
+      if (!conv || !conv.participants.includes(userId)) return;
       store.markConversationRead(conversationId, userId);
       socket.to(`private-chat:${conversationId}`).emit('messages_read_by_user', {
         conversationId,
