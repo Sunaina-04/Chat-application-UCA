@@ -269,6 +269,28 @@ Visit **[http://localhost:5173](http://localhost:5173)** in your browser!
 
 ---
 
+### 🐳 Run with Docker (Zero-Config Deployment)
+
+#### Option A: Docker Compose (Full-Stack with MongoDB)
+Spin up the complete stack (app + MongoDB database with persistent volumes):
+```bash
+docker compose up --build
+```
+Open **[http://localhost:5000](http://localhost:5000)** in your browser!
+
+#### Option B: Standalone Docker Container
+```bash
+# Build the production multi-stage image
+docker build -t chatspace .
+
+# Run container (uses built-in zero-dependency store or external MongoDB)
+docker run -d -p 5000:5000 \
+  -e JWT_SECRET="your_strong_random_jwt_secret" \
+  --name chatspace-app chatspace
+```
+
+---
+
 ## 🔑 Pre-Seeded Demo Accounts
 
 ChatSpace comes pre-configured with active demo accounts. Use them directly on the login screen via **1-Click Quick Demo Sign-In** or the **Demo Switcher** inside the app. For standard password-based sign-in in development, set `DEMO_USER_PASSWORD` in your server `.env` (by default, cryptographically secure random passwords are generated per boot):

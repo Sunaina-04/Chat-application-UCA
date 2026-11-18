@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  chatspace:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chatspace-app
+    restart: unless-stopped
+    ports:
+      - "${PORT:-5000}:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - JWT_SECRET=${JWT_SECRET:-chatspace_super_secret_jwt_key_docker_default_change_me}
+      - MONGODB_URI=mongodb://mongodb:27017/chatspace
+      - CLIENT_URL=${CLIENT_URL:-}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - uploads_data:/app/server/uploads
+
+  mongodb:
+    image: mongo:7-jammy
+    container_name: chatspace-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  mongo_data:
+  uploads_data:
